@@ -1,0 +1,33 @@
+image: firebear/magento2
+
+pipelines:
+  default:
+    - step:
+        name: Check codestyle
+        script:
+          - ssh -o StrictHostKeyChecking=No $TESTING_SERVER -p $TESTING_PORT "./scripts/codestyle.sh $BITBUCKET_BRANCH"
+    - step:
+        name: Run compile
+        script:        
+          - ssh -o StrictHostKeyChecking=No $DEVELOP_SERVER "/chroot/home/a0563af8/scripts/compile.sh $BITBUCKET_BRANCH"
+    - step:
+        name: Run static tests
+        script:
+          - ssh -o StrictHostKeyChecking=No $DEVELOP_SERVER "/chroot/home/a0563af8/scripts/static-tests.sh $BITBUCKET_BRANCH"
+  branches:
+      master:
+        - parallel:        
+          - step:
+              name: Deploy gold (CE 2.4.0)
+              script:
+                - ssh -o StrictHostKeyChecking=No $DEVELOP_SERVER "/chroot/home/a0563af8/scripts/update.sh develop-gold.dev.firebearstudio.com"
+      ee:
+        - parallel:
+          - step:
+              name: Deploy alpha (EE 2.4.0)
+              script:
+                - ssh -o StrictHostKeyChecking=No $DEVELOP_SERVER "/chroot/home/a0563af8/scripts/update.sh develop-alpha.dev.firebearstudio.com"
+          - step:
+              name: Deploy cypress (EE 2.4.0)
+              script:
+                - ssh -o StrictHostKeyChecking=No $DEVELOP_SERVER "/chroot/home/a0563af8/scripts/update.sh develop-cypress.dev.firebearstudio.com"
